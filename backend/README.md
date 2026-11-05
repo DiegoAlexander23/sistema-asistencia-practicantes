@@ -36,5 +36,7 @@ npm install
 npm install express cors dotenv mysql2 bcrypt
 npm install nodemon -D
 
+npm install @google/genai
+
 ## Ejecucion
 npm run dev
