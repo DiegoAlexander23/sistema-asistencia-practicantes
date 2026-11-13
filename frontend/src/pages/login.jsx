@@ -20,12 +20,13 @@ function Login() {
     })
     const data = await respuesta.json()
     console.log(data)
-    if (respuesta.ok && data.success) {
-        localStorage.setItem("sesion", "true");
-        localStorage.setItem("usuario", JSON.stringify(data.usuario));  
-        
-        window.location.href = "/dashboard";
-    } else {
+    if (respuesta.ok && data.success && data.token) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("sesion", "true");
+      localStorage.setItem("usuario", JSON.stringify(data.usuario));
+
+      window.location.href = "/dashboard";
+    }else {
         alert(data.mensaje || "Credenciales incorrectas");
     }
   }

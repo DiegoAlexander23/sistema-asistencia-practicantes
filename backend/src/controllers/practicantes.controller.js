@@ -42,6 +42,17 @@ export async function registrarPracticante(req, res) {
                 mensaje: "Completa todos los campos obligatorios."
             });
         }
+        if (
+            nombre.trim().length > 100 ||
+            apellido.trim().length > 100 ||
+            telefono.trim().length > 20 ||
+            area.trim().length > 100
+        ) {
+            return res.status(400).json({
+                success: false,
+                mensaje: "Uno o más campos superan la longitud permitida."
+            });
+        }
 
         if (!/^\+?[0-9\s-]{7,15}$/.test(telefono.trim())) {
             return res.status(400).json({

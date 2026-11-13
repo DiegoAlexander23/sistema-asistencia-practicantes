@@ -16,8 +16,9 @@ function Dashboard() {
     useEffect(() => {
         const verificarSesion = () => {
             const sesion = localStorage.getItem("sesion");
+            const token = localStorage.getItem("token");
 
-            if (sesion !== "true") {
+            if (sesion !== "true" || !token) {
                 window.location.replace("/");
             }
         };
@@ -32,6 +33,7 @@ function Dashboard() {
     }, []);
 
     function cerrarSesion() {
+        localStorage.removeItem("token");
         localStorage.removeItem("sesion");
         localStorage.removeItem("usuario");
 

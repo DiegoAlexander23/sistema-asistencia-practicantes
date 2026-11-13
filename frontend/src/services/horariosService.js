@@ -1,7 +1,10 @@
+
+import { apiFetch } from "./api.js";
+
 const API_URL = "http://localhost:8080/api/horarios";
 
 export async function obtenerHorarios() {
-    const respuesta = await fetch(API_URL);
+    const respuesta = await apiFetch(API_URL);
     const data = await respuesta.json();
 
     if (!respuesta.ok || !data.success) {
@@ -14,7 +17,7 @@ export async function obtenerHorarios() {
 }
 
 export async function registrarHorario(horario) {
-    const respuesta = await fetch(API_URL, {
+    const respuesta = await apiFetch(API_URL, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -34,7 +37,7 @@ export async function registrarHorario(horario) {
 }
 
 export async function registrarHorariosSemana(datos) {
-    const respuesta = await fetch(`${API_URL}/semana`, {
+    const respuesta = await apiFetch(`${API_URL}/semana`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -54,7 +57,7 @@ export async function registrarHorariosSemana(datos) {
 }
 
 export async function actualizarHorariosSemana(practicanteId, datos) {
-    const respuesta = await fetch(
+    const respuesta = await apiFetch(
         `${API_URL}/semana/${practicanteId}`,
         {
             method: "PUT",
@@ -75,8 +78,9 @@ export async function actualizarHorariosSemana(practicanteId, datos) {
 
     return data;
 }
+
 export async function eliminarHorariosPracticante(practicanteId) {
-    const respuesta = await fetch(
+    const respuesta = await apiFetch(
         `${API_URL}/semana/${practicanteId}`,
         {
             method: "DELETE"

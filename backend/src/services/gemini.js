@@ -32,19 +32,19 @@ export async function clasificarConGemini(texto) {
             - No confundas una pregunta con una marcación.
             - criterio estricto.
             REGLA IMPORTANTE:
-No clasifiques un mensaje como "salida" únicamente porque contenga
-una despedida, agradecimiento o referencia al día siguiente.
+            No clasifiques un mensaje como "salida" únicamente porque contenga
+            una despedida, agradecimiento o referencia al día siguiente.
 
-Ejemplos:
-- "Gracias, nos vemos mañana" → otro
-- "Hasta mañana, que tengan buena tarde" → otro
-- "Muchas gracias, hasta luego" → otro
-- "Ya terminé mi jornada, hasta mañana" → salida
-- "Ya acabé mis actividades y me retiro" → salida
+            Ejemplos:
+            - "Gracias, nos vemos mañana" → otro
+            - "Hasta mañana, que tengan buena tarde" → otro
+            - "Muchas gracias, hasta luego" → otro
+            - "Ya terminé mi jornada, hasta mañana" → salida
+            - "Ya acabé mis actividades y me retiro" → salida
 
-Para clasificar como "salida", el mensaje debe comunicar
-que el practicante terminó su jornada o se está retirando
-del trabajo. No basta con una despedida.  
+            Para clasificar como "salida", el mensaje debe comunicar
+            que el practicante terminó su jornada o se está retirando
+            del trabajo. No basta con una despedida.  
 
             Mensaje: "${texto}"
 

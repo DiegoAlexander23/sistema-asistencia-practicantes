@@ -1,8 +1,8 @@
-
+import { apiFetch } from "./api.js";
 const API_URL = "http://localhost:8080/api/practicantes";
 
 export async function obtenerPracticantes() {
-    const respuesta = await fetch(API_URL);
+    const respuesta = await apiFetch(API_URL);
     const data = await respuesta.json();
 
     if (!respuesta.ok || !data.success) {
@@ -13,7 +13,7 @@ export async function obtenerPracticantes() {
 }
 
 export async function registrarPracticante(practicante) {
-    const respuesta = await fetch(API_URL, {
+    const respuesta = await apiFetch(API_URL, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -31,7 +31,7 @@ export async function registrarPracticante(practicante) {
 }
 
 export async function actualizarPracticante(id, practicante) {
-    const respuesta = await fetch(`${API_URL}/${id}`, {
+    const respuesta = await apiFetch(`${API_URL}/${id}`, {
         method: "PUT",
         headers: {
             "Content-Type": "application/json"
@@ -49,7 +49,7 @@ export async function actualizarPracticante(id, practicante) {
 }
 
 export async function cambiarEstadoPracticante(id, estado) {
-    const respuesta = await fetch(`${API_URL}/${id}/estado`, {
+    const respuesta = await apiFetch(`${API_URL}/${id}/estado`, {
         method: "PATCH",
         headers: {
             "Content-Type": "application/json"
