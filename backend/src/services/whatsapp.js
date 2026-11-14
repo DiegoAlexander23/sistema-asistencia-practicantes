@@ -7,6 +7,8 @@ export async function enviarMensajeWhatsApp(telefono, texto) {
         throw new Error("Faltan las credenciales de WhatsApp en el archivo .env");
     }
 
+    const limpio = String(telefono).replace(/\D/g, "");
+    const destino = limpio.length === 9 ? `51${limpio}` : limpio;
     const respuesta = await fetch(
         `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages`,
         {
@@ -18,7 +20,7 @@ export async function enviarMensajeWhatsApp(telefono, texto) {
             body: JSON.stringify({
                 messaging_product: "whatsapp",
                 recipient_type: "individual",
-                to: telefono,
+                to: destino,
                 type: "text",
                 text: {
                     body: texto

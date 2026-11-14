@@ -1,177 +1,74 @@
-
 import { useEffect, useState } from "react";
-import { obtenerAsistencias } from "../services/asistenciasService";
 import { obtenerPracticantes } from "../services/practicantesService";
 import { obtenerReporte } from "../services/reportesService";
 import "./style/reportes.css";
-import {
-    ResponsiveContainer,
-    PieChart,
-    Pie,
-    Cell,
-    Tooltip,
-} from "recharts";
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
+
+const COLORES = {
+    puntuales: "#3b82f6",
+    tardanzas: "#f59e0b",
+    faltas: "#f43f5e",
+    justificadas: "#94a3b8",
+};
 
 function Reportes() {
-    const [asistencias, setAsistencias] = useState([]);
     const [practicantes, setPracticantes] = useState([]);
     const [fechaInicio, setFechaInicio] = useState("");
     const [fechaFin, setFechaFin] = useState("");
     const [practicanteId, setPracticanteId] = useState("");
+    const [reporte, setReporte] = useState(null);
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
-    const [reporte, setReporte] = useState(null);
+
     useEffect(() => {
-        const cargarDatos = async () => {
+        obtenerPracticantes().then(setPracticantes).catch(console.error);
+    }, []);
+
+    useEffect(() => {
+        const cargar = async () => {
             try {
                 setCargando(true);
                 setError("");
-
-                const [datosAsistencias, datosPracticantes] =
-                    await Promise.all([
-                        obtenerAsistencias(),
-                        obtenerPracticantes(),
-                    ]);
-
-                setAsistencias(datosAsistencias);
-                setPracticantes(datosPracticantes);
+                setReporte(
+                    await obtenerReporte({
+                        inicio: fechaInicio,
+                        fin: fechaFin,
+                        practicante: practicanteId,
+                    })
+                );
             } catch (err) {
-                setError(err.message || "No se pudieron cargar los reportes.");
+                console.error(err);
+                setReporte(null);
+                setError("No se pudo cargar el reporte.");
             } finally {
                 setCargando(false);
             }
         };
-
-        cargarDatos();
-    }, []);
-    useEffect(() => {
-        const cargarReporte = async () => {
-            try {
-                const datos = await obtenerReporte({
-                    inicio: fechaInicio,
-                    fin: fechaFin,
-                    practicante: practicanteId,
-                });
-                setReporte(datos);
-            } catch (err) {
-                console.error(err);
-                setReporte(null);
-            }
-        };
-
-        cargarReporte();
+        cargar();
     }, [fechaInicio, fechaFin, practicanteId]);
 
-    const asistenciasFiltradas = asistencias.filter((a) => {
-        const fecha = String(a.fecha_hora_mensaje || "").slice(0, 10);
+    const t = reporte?.totales;
+    const filas = (reporte?.practicantes ?? []).filter((p) => p.programados > 0);
 
-        const cumpleInicio = !fechaInicio || fecha >= fechaInicio;
-        const cumpleFin = !fechaFin || fecha <= fechaFin;
-        const cumplePracticante =
-            !practicanteId ||
-            String(a.id_practicante) === practicanteId;
+    const evaluables = t ? t.puntuales + t.tardanzas + t.faltas : 0;
+    const pctAsistencia =
+        evaluables > 0
+            ? Math.round(((t.puntuales + t.tardanzas) / evaluables) * 100)
+            : null;
 
-        return cumpleInicio && cumpleFin && cumplePracticante;
-    });
+    const datosDona = t
+        ? [
+              { estado: "Puntuales", cantidad: t.puntuales, color: COLORES.puntuales },
+              { estado: "Tardanzas", cantidad: t.tardanzas, color: COLORES.tardanzas },
+              { estado: "Faltas", cantidad: t.faltas, color: COLORES.faltas },
+              { estado: "Justificadas", cantidad: t.justificadas, color: COLORES.justificadas },
+          ].filter((d) => d.cantidad > 0)
+        : [];
 
-    const entradas = asistenciasFiltradas.filter(
-        (a) => a.tipo?.toLowerCase() === "entrada"
-    );
+    const totalDona = datosDona.reduce((suma, d) => suma + d.cantidad, 0);
 
-    const salidas = asistenciasFiltradas.filter(
-        (a) => a.tipo?.toLowerCase() === "salida"
-    );
-
-    const puntuales = entradas.filter(
-        (a) => a.estado?.toLowerCase() === "puntual"
-    );
-
-    const tardanzas = entradas.filter(
-        (a) => a.estado?.toLowerCase() === "tardanza"
-    );
-
-    const porcentajePuntualidad =
-        entradas.length > 0
-            ? Math.round((puntuales.length / entradas.length) * 100)
-            : 0;
-
-    const totalEvaluadas = puntuales.length + tardanzas.length;
-
-    const porcentajePuntuales =
-        totalEvaluadas > 0
-            ? Math.round((puntuales.length / totalEvaluadas) * 100)
-            : 0;
-
-    const porcentajeTardanzas =
-        totalEvaluadas > 0
-            ? 100 - porcentajePuntuales
-            : 0;
-
-    const datosGraficoPuntualidad = [
-        {
-            estado: "Puntuales",
-            cantidad: puntuales.length,
-            porcentaje: porcentajePuntuales,
-        },
-        {
-            estado: "Tardanzas",
-            cantidad: tardanzas.length,
-            porcentaje: porcentajeTardanzas,
-        },
-    ];
-
-    
-const resumenPracticantes = practicantes
-    .map((p) => {
-        const marcas = asistenciasFiltradas.filter(
-            (a) => String(a.id_practicante) === String(p.id)
-        );
-
-        const entradasPracticante = marcas.filter(
-            (a) => a.tipo?.toLowerCase() === "entrada"
-        );
-
-        const puntualesPracticante = entradasPracticante.filter(
-            (a) => a.estado?.toLowerCase() === "puntual"
-        );
-
-        const tardanzasPracticante = entradasPracticante.filter(
-            (a) => a.estado?.toLowerCase() === "tardanza"
-        );
-
-        const entradasEvaluables =
-            puntualesPracticante.length + tardanzasPracticante.length;
-
-        const porcentaje =
-            entradasEvaluables > 0
-                ? Math.round(
-                      (puntualesPracticante.length / entradasEvaluables) * 100
-                  )
-                : null;
-
-        return {
-            id: p.id,
-            nombre: `${p.nombre} ${p.apellido}`,
-            entradas: entradasPracticante.length,
-            puntuales: puntualesPracticante.length,
-            tardanzas: tardanzasPracticante.length,
-            porcentaje,
-        };
-    })
-    .filter((p) => p.entradas > 0)
-    .sort((a, b) => b.tardanzas - a.tardanzas);
-
-    if (cargando) {
+    if (!reporte && cargando) {
         return <div className="reportes"><p>Cargando reportes...</p></div>;
-    }
-
-    if (error) {
-        return (
-            <div className="reportes">
-                <h2>Reportes</h2>
-                <p className="reportes-error">{error}</p>
-            </div>
-        );
     }
 
     return (
@@ -179,37 +76,31 @@ const resumenPracticantes = practicantes
             <header className="reportes-header">
                 <div>
                     <h1>Reportes</h1>
-                    <p>Resumen de las marcaciones de asistencia.</p>
+                    <p>
+                        Asistencia según el horario de cada practicante
+                        {reporte ? ` (del ${reporte.rango.inicio} al ${reporte.rango.fin}).` : "."}
+                    </p>
                 </div>
             </header>
+
+            {error && <p className="reportes-error">{error}</p>}
 
             <section className="reportes-filtros">
                 <label>
                     Desde
-                    <input
-                        type="date"
-                        value={fechaInicio}
-                        max={fechaFin || undefined}
-                        onChange={(e) => setFechaInicio(e.target.value)}
-                    />
+                    <input type="date" value={fechaInicio} max={fechaFin || undefined}
+                        onChange={(e) => setFechaInicio(e.target.value)} />
                 </label>
 
                 <label>
                     Hasta
-                    <input
-                        type="date"
-                        value={fechaFin}
-                        min={fechaInicio || undefined}
-                        onChange={(e) => setFechaFin(e.target.value)}
-                    />
+                    <input type="date" value={fechaFin} min={fechaInicio || undefined}
+                        onChange={(e) => setFechaFin(e.target.value)} />
                 </label>
 
                 <label>
                     Practicante
-                    <select
-                        value={practicanteId}
-                        onChange={(e) => setPracticanteId(e.target.value)}
-                    >
+                    <select value={practicanteId} onChange={(e) => setPracticanteId(e.target.value)}>
                         <option value="">Todos los practicantes</option>
                         {practicantes.map((p) => (
                             <option key={p.id} value={String(p.id)}>
@@ -219,238 +110,116 @@ const resumenPracticantes = practicantes
                     </select>
                 </label>
 
-                <button
-                    type="button"
-                    onClick={() => {
-                        setFechaInicio("");
-                        setFechaFin("");
-                        setPracticanteId("");
-                    }}
-                >
+                <button type="button" onClick={() => {
+                    setFechaInicio(""); setFechaFin(""); setPracticanteId("");
+                }}>
                     Limpiar filtros
                 </button>
             </section>
 
             <section className="reportes-tarjetas">
-                <article className="reporte-card">
-                    <span>Entradas</span>
-                    <strong>{entradas.length}</strong>
-                </article>
-
-                <article className="reporte-card">
-                    <span>Salidas</span>
-                    <strong>{salidas.length}</strong>
-                </article>
-
-                <article className="reporte-card">
-                    <span>Entradas puntuales</span>
-                    <strong>{puntuales.length}</strong>
-                </article>
-
-                <article className="reporte-card">
-                    <span>Tardanzas</span>
-                    <strong>{tardanzas.length}</strong>
-                </article>
-
-                <article className="reporte-card">
-                    <span>Puntualidad</span>
-                    <strong>{porcentajePuntualidad}%</strong>
-                </article>
-                <article className="reporte-card">
-                    <span>Faltas</span>
-                    <strong>{reporte ? reporte.totales.faltas : "—"}</strong>
-                </article>
-
-                <article className="reporte-card">
-                    <span>Min. de tardanza</span>
-                    <strong>{reporte ? reporte.totales.minutos_tarde : "—"}</strong>
-                </article>
+                <article className="reporte-card"><span>Días programados</span><strong>{t ? t.programados : "—"}</strong></article>
+                <article className="reporte-card"><span>Puntuales</span><strong>{t ? t.puntuales : "—"}</strong></article>
+                <article className="reporte-card"><span>Tardanzas</span><strong>{t ? t.tardanzas : "—"}</strong></article>
+                <article className="reporte-card"><span>Faltas</span><strong>{t ? t.faltas : "—"}</strong></article>
+                <article className="reporte-card"><span>Justificadas</span><strong>{t ? t.justificadas : "—"}</strong></article>
+                <article className="reporte-card"><span>Asistencia</span><strong>{pctAsistencia === null ? "—" : `${pctAsistencia}%`}</strong></article>
             </section>
-
 
             <section className="reportes-graficos-conjuntos">
                 <section className="reportes-grafico reportes-grafico-dona">
                     <div className="reportes-grafico-header">
-                        <h2>Puntualidad general</h2>
-                        <p>Distribución de entradas evaluadas.</p>
+                        <h2>Asistencia general</h2>
+                        <p>Distribución de las jornadas ya terminadas.</p>
                     </div>
 
                     <div className="reportes-dona-contenedor">
-                        {totalEvaluadas === 0 ? (
-                            <p className="reportes-vs-vacio">
-                                No hay entradas evaluables.
-                            </p>
+                        {totalDona === 0 ? (
+                            <p className="reportes-vs-vacio">No hay jornadas terminadas en este período.</p>
                         ) : (
                             <>
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
-                                        <Pie
-                                            data={datosGraficoPuntualidad}
-                                            dataKey="cantidad"
-                                            nameKey="estado"
-                                            innerRadius="62%"
-                                            outerRadius="88%"
-                                            paddingAngle={2}
-                                            stroke="none"
-                                        >
-                                            {datosGraficoPuntualidad.map((dato, index) => (
-                                                <Cell
-                                                    key={dato.estado}
-                                                    fill={index === 0 ? "#3b82f6" : "#f43f5e"}
-                                                />
+                                        <Pie data={datosDona} dataKey="cantidad" nameKey="estado"
+                                            innerRadius="62%" outerRadius="88%" paddingAngle={2} stroke="none">
+                                            {datosDona.map((d) => (
+                                                <Cell key={d.estado} fill={d.color} />
                                             ))}
                                         </Pie>
-
-                                        <Tooltip
-                                            formatter={(value, name) => [
-                                                `${value} entradas`,
-                                                name,
-                                            ]}
-                                        />
+                                        <Tooltip formatter={(v, n) => [`${v} jornadas`, n]} />
                                     </PieChart>
                                 </ResponsiveContainer>
 
                                 <div className="reportes-dona-centro">
-                                    <strong>{porcentajePuntuales}%</strong>
-                                    <span>Puntuales</span>
+                                    <strong>{pctAsistencia === null ? "—" : `${pctAsistencia}%`}</strong>
+                                    <span>Asistencia</span>
                                 </div>
                             </>
                         )}
                     </div>
 
                     <div className="reportes-leyenda reportes-leyenda-dona">
-                        <span>
-                            <i className="reportes-punto-azul" />
-                            Puntuales ({puntuales.length})
-                        </span>
-                        <span>
-                            <i className="reportes-punto-rojo" />
-                            Tardanzas ({tardanzas.length})
-                        </span>
+                        {datosDona.map((d) => (
+                            <span key={d.estado}>
+                                <i style={{ background: d.color, display: "inline-block", width: 8, height: 8, borderRadius: "50%", marginRight: 6 }} />
+                                {d.estado} ({d.cantidad})
+                            </span>
+                        ))}
                     </div>
                 </section>
 
-                {/* Comparación por practicante */}
                 <section className="reportes-grafico reportes-grafico-practicantes">
                     <div className="reportes-grafico-header">
-                        <h2>Entradas por practicante</h2>
-                        <p>Comparación durante el período seleccionado.</p>
-                    </div>
-
-                    <div className="reportes-leyenda">
-                        <span>
-                            <i className="reportes-punto-azul" />
-                            Puntual
-                        </span>
-                        <span>
-                            <i className="reportes-punto-rojo" />
-                            Tardanza
-                        </span>
-                        <span>
-                            <i className="reportes-punto-gris" />
-                            Sin marcación
-                        </span>
+                        <h2>Jornadas por practicante</h2>
+                        <p>Comparación durante el período seleccionado.</p><br />
                     </div>
 
                     <div className="reportes-barras-practicantes">
-                        {resumenPracticantes.filter(
-                            (p) => p.puntuales + p.tardanzas > 0
-                        ).length === 0 ? (
-                            <p>No hay entradas evaluables para comparar.</p>
+                        {filas.filter((p) => p.puntuales + p.tardanzas + p.faltas + p.justificadas > 0).length === 0 ? (
+                            <p>No hay jornadas terminadas para comparar.</p>
                         ) : (
-                            resumenPracticantes
-                                .filter((p) => p.puntuales + p.tardanzas > 0)
+                            filas
+                                .filter((p) => p.puntuales + p.tardanzas + p.faltas + p.justificadas > 0)
                                 .map((p) => {
-                                    const total = p.puntuales + p.tardanzas;
-                                    const porcentajeAzul = (p.puntuales / total) * 100;
-                                    const porcentajeRojo = (p.tardanzas / total) * 100;
+                                    const total = p.puntuales + p.tardanzas + p.faltas + p.justificadas;
+                                    const tramos = [
+                                        ["puntuales", p.puntuales],
+                                        ["tardanzas", p.tardanzas],
+                                        ["faltas", p.faltas],
+                                        ["justificadas", p.justificadas],
+                                    ];
 
                                     return (
-                                        <div
-                                            className="reportes-fila-practicante"
-                                            key={p.id}
-                                        >
-                                            <span className="reportes-nombre-practicante">
-                                                {p.nombre}
-                                            </span>
+                                        <div className="reportes-fila-practicante" key={p.id}>
+                                            <span className="reportes-nombre-practicante">{p.nombre}</span>
 
-                                            <div
-                                                className="reportes-barra-practicante"
-                                                role="img"
-                                                aria-label={`${p.nombre}: ${p.puntuales} puntuales y ${p.tardanzas} tardanzas`}
-                                            >
-                                                <div
-                                                    className="reportes-barra-azul"
-                                                    style={{ width: `${porcentajeAzul}%` }}
-                                                />
-                                                <div
-                                                    className="reportes-barra-roja"
-                                                    style={{ width: `${porcentajeRojo}%` }}
-                                                />
+                                            <div className="reportes-barra-practicante" role="img"
+                                                aria-label={`${p.nombre}: ${p.puntuales} puntuales, ${p.tardanzas} tardanzas, ${p.faltas} faltas`}>
+                                                {tramos.map(([clave, cantidad]) => (
+                                                    <div key={clave} style={{
+                                                        width: `${(cantidad / total) * 100}%`,
+                                                        height: "100%",
+                                                        background: COLORES[clave],
+                                                    }} />
+                                                ))}
                                             </div>
 
-                                            <span className="reportes-total-practicante">
-                                                {total}
-                                            </span>
+                                            <span className="reportes-total-practicante">{total}</span>
                                         </div>
                                     );
                                 })
                         )}
                     </div>
                 </section>
-            </section>
-
+            </section><br />
 
             <section className="reportes-tabla">
-                <h2>Resumen por practicante</h2>
+                <h2>Detalle por practicante</h2>
                 <p className="reportes-descripcion">
-                    Rendimiento de asistencia durante el período seleccionado.
+                    Solo cuentan los días que cada practicante debía asistir.
                 </p>
 
-                {resumenPracticantes.length === 0 ? (
-                    <p>No hay entradas registradas para estos filtros.</p>
-                ) : (
-                    <div className="reportes-tabla-contenedor">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Practicante</th>
-                                    <th>Entradas</th>
-                                    <th>Puntuales</th>
-                                    <th>Tardanzas</th>
-                                    <th>Puntualidad</th>
-                                </tr>
-                            </thead>
-
-                            <tbody>
-                                {resumenPracticantes.map((p) => (
-                                    <tr key={p.id}>
-                                        <td>{p.nombre}</td>
-                                        <td>{p.entradas}</td>
-                                        <td>{p.puntuales}</td>
-                                        <td>{p.tardanzas}</td>
-                                        <td>
-                                            {p.porcentaje === null
-                                                ? "—"
-                                                : `${p.porcentaje}%`}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-            </section>
-            <section className="reportes-tabla">
-                <h2>Asistencia según horario</h2>
-                <p className="reportes-descripcion">
-                    Solo cuentan los días que cada practicante debía asistir
-                    {reporte
-                        ? ` (del ${reporte.rango.inicio} al ${reporte.rango.fin}).`
-                        : "."}
-                </p>
-
-                {!reporte || reporte.practicantes.length === 0 ? (
+                {filas.length === 0 ? (
                     <p>No hay datos para estos filtros.</p>
                 ) : (
                     <div className="reportes-tabla-contenedor">
@@ -463,30 +232,29 @@ const resumenPracticantes = practicantes
                                     <th>Tardanzas</th>
                                     <th>Min. tarde</th>
                                     <th>Faltas</th>
+                                    <th>Justificadas</th>
                                     <th>Pendientes</th>
                                     <th>Asistencia</th>
                                 </tr>
                             </thead>
-
                             <tbody>
-                                {reporte.practicantes
-                                    .filter((p) => p.programados > 0)
-                                    .map((p) => (
-                                        <tr key={p.id}>
-                                            <td>{p.nombre} {p.apellido}</td>
-                                            <td>{p.programados}</td>
-                                            <td>{p.puntuales}</td>
-                                            <td>{p.tardanzas}</td>
-                                            <td>{p.minutos_tarde}</td>
-                                            <td>{p.faltas}</td>
-                                            <td>{p.pendientes}</td>
-                                            <td>
-                                                {p.porcentaje_asistencia === null
-                                                    ? "—"
-                                                    : `${p.porcentaje_asistencia}%`}
-                                            </td>
-                                        </tr>
-                                    ))}
+                                {filas.map((p) => (
+                                    <tr key={p.id}>
+                                        <td>{p.nombre} {p.apellido}</td>
+                                        <td>{p.programados}</td>
+                                        <td>{p.puntuales}</td>
+                                        <td>{p.tardanzas}</td>
+                                        <td>{p.minutos_tarde}</td>
+                                        <td>{p.faltas}</td>
+                                        <td>{p.justificadas}</td>
+                                        <td>{p.pendientes}</td>
+                                        <td>
+                                            {p.porcentaje_asistencia === null
+                                                ? "—"
+                                                : `${p.porcentaje_asistencia}%`}
+                                        </td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                     </div>

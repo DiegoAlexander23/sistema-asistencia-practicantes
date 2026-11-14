@@ -9,7 +9,7 @@ import { obtenerReporte } from "../services/reportesService";
 
 function Inicio() {
     const [asistencias, setAsistencias] = useState([]);
-    const [faltasHoy, setFaltasHoy] = useState(null);
+    const [reporteHoy, setReporteHoy] = useState(null);
     const [horarios, setHorarios] = useState([]);
     const [practicantes, setPracticantes] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -39,7 +39,7 @@ function Inicio() {
                 setAsistencias(datosAsistencias);
                 setHorarios(datosHorarios);
                 setPracticantes(datosPracticantes);
-                setFaltasHoy(datosReporte.totales.faltas);
+                setReporteHoy(datosReporte);
             } catch (err) {
                 setError(err.message || "No se pudieron cargar los datos.");
             } finally {
@@ -126,11 +126,20 @@ function Inicio() {
                 .reverse()
                 .find((marcacion) => marcacion.tipo === "salida");
 
+            const jornada = reporteHoy?.practicantes.find(
+                (p) => String(p.id) === String(horario.practicante_id)
+            );
+
+            let estado = "Sin marcación";
+            if (jornada?.faltas > 0) estado = "Falta";
+            else if (jornada?.justificadas > 0) estado = "Justificada";
+            else if (entrada?.estado) estado = entrada.estado;
+
             return {
                 ...horario,
                 entrada,
                 salida,
-                estado: entrada?.estado || "Sin marcación"
+                estado
             };
         });
 
@@ -144,7 +153,7 @@ function Inicio() {
         (a) => a.tipo === "entrada" && a.estado === "Tardanza"
     ).length;
 
-    const sinMarcacion = filas.filter((fila) => !fila.entrada).length;
+    const sinMarcacion = filas.filter((fila) => fila.estado === "Sin marcación").length;
 
     function formatearHora(fecha) {
         if (!fecha) return "—";
@@ -217,7 +226,7 @@ function Inicio() {
                     <div className="tarjeta-icono">!</div>
                     <div className="tarjeta-info">
                         <p>Faltas confirmadas</p>
-                        <strong>{cargando || faltasHoy === null ? "—" : faltasHoy}</strong>
+                        <strong>{cargando || !reporteHoy ? "—" : reporteHoy.totales.faltas}</strong>
                         <span>Turno terminado sin entrada hoy</span>
                     </div>
                 </article>
