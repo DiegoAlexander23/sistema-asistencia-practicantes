@@ -17,9 +17,10 @@
     "dotenv": "^18.0.9",
     "express": "^5.3.0",
     "jsonwebtoken": "^9.0.3",
-    "mysql2": "^3.24.6"
+    "mysql2": "^3.24.6",
+    "node-cron": "^4.6.0"
   },
-    "overrides": {
+  "overrides": {
     "nodemon": {
       "minimatch": "^11.0.1"
     }

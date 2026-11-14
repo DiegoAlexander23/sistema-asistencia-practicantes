@@ -7,6 +7,7 @@ import Configuracion from "./configuracion.jsx";
 import Horarios from "./horarios.jsx";
 import Historial from "./historial.jsx";
 import Reportes from "./reportes.jsx";
+import Justificaciones from "./justificaciones.jsx";
 
 import logo from "../assets/logo.png";
 
@@ -46,7 +47,7 @@ function Dashboard() {
         { id: "horarios", icono: "⏱", nombre: "Horarios" },
         { id: "historial", icono: "▤", nombre: "Historial de asistencias" },
         { id: "reportes", icono: "📊︎", nombre: "Reportes" },
-        //{ id: "configuracion", icono: "⚙", nombre: "Configuración" }
+        { id: "justificaciones", icono: "✎", nombre: "Justificaciones" },
     ];
 
     const nombrePagina =
@@ -114,6 +115,7 @@ function Dashboard() {
                     {page === "horarios" && <Horarios />}
                     {page === "historial" && <Historial />}
                     {page === "reportes" && <Reportes />}
+                    {page === "justificaciones" && <Justificaciones />}
                     
                 </main>
             </div>

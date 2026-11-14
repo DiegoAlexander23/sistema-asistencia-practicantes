@@ -12,56 +12,27 @@ export const obtenerAsistencias = async (req, res) => {
                 a.fecha_hora_mensaje,
                 a.tipo,
                 a.mensaje_original,
-
                 CASE
-                    WHEN h.id IS NULL THEN 'Pendiente'
-
+                    WHEN j.id IS NULL THEN 'Pendiente'
                     WHEN a.tipo = 'entrada' THEN
-                        CASE
-                            WHEN TIME(a.fecha_hora_mensaje)
-                                <= ADDTIME(h.hora_entrada, '00:05:00')
-                            THEN 'Puntual'
-                            ELSE 'Tardanza'
+                        CASE j.estado
+                            WHEN 'puntual' THEN 'Puntual'
+                            WHEN 'tarde'   THEN 'Tardanza'
+                            ELSE 'Pendiente'
                         END
-
                     WHEN a.tipo = 'salida' THEN
-                        CASE
-                            WHEN TIME(a.fecha_hora_mensaje) < h.hora_salida
-                            THEN 'Anticipada'
-                            ELSE 'Normal'
+                        CASE j.estado_salida
+                            WHEN 'anticipada' THEN 'Anticipada'
+                            WHEN 'normal'     THEN 'Normal'
+                            ELSE 'Pendiente'
                         END
-
                     ELSE 'Pendiente'
                 END AS estado
-
             FROM asistencias a
-
-            INNER JOIN practicantes p
-                ON a.id_practicante = p.id
-
-            LEFT JOIN horarios h
-            ON h.practicante_id = a.id_practicante
-                AND LOWER(
-                    REPLACE(
-                        REPLACE(
-                            REPLACE(
-                                REPLACE(TRIM(h.dia_semana), 'á', 'a'),
-                                'é', 'e'
-                            ),
-                            'í', 'i'
-                        ),
-                        'ó', 'o'
-                    )
-                ) = CASE DAYOFWEEK(a.fecha_hora_mensaje)
-                    WHEN 1 THEN 'domingo'
-                    WHEN 2 THEN 'lunes'
-                    WHEN 3 THEN 'martes'
-                    WHEN 4 THEN 'miercoles'
-                    WHEN 5 THEN 'jueves'
-                    WHEN 6 THEN 'viernes'
-                    WHEN 7 THEN 'sabado'
-                END
-
+            INNER JOIN practicantes p ON p.id = a.id_practicante
+            LEFT JOIN jornadas j
+                ON j.id_practicante = a.id_practicante
+               AND j.fecha = DATE(a.fecha_hora_mensaje)
             ORDER BY a.fecha_hora_mensaje DESC
         `);
 

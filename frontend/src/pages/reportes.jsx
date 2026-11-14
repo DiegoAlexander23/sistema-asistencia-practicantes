@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { obtenerAsistencias } from "../services/asistenciasService";
 import { obtenerPracticantes } from "../services/practicantesService";
+import { obtenerReporte } from "../services/reportesService";
 import "./style/reportes.css";
 import {
     ResponsiveContainer,
@@ -19,7 +20,7 @@ function Reportes() {
     const [practicanteId, setPracticanteId] = useState("");
     const [cargando, setCargando] = useState(true);
     const [error, setError] = useState("");
-
+    const [reporte, setReporte] = useState(null);
     useEffect(() => {
         const cargarDatos = async () => {
             try {
@@ -43,6 +44,23 @@ function Reportes() {
 
         cargarDatos();
     }, []);
+    useEffect(() => {
+        const cargarReporte = async () => {
+            try {
+                const datos = await obtenerReporte({
+                    inicio: fechaInicio,
+                    fin: fechaFin,
+                    practicante: practicanteId,
+                });
+                setReporte(datos);
+            } catch (err) {
+                console.error(err);
+                setReporte(null);
+            }
+        };
+
+        cargarReporte();
+    }, [fechaInicio, fechaFin, practicanteId]);
 
     const asistenciasFiltradas = asistencias.filter((a) => {
         const fecha = String(a.fecha_hora_mensaje || "").slice(0, 10);
@@ -238,11 +256,19 @@ const resumenPracticantes = practicantes
                     <span>Puntualidad</span>
                     <strong>{porcentajePuntualidad}%</strong>
                 </article>
+                <article className="reporte-card">
+                    <span>Faltas</span>
+                    <strong>{reporte ? reporte.totales.faltas : "—"}</strong>
+                </article>
+
+                <article className="reporte-card">
+                    <span>Min. de tardanza</span>
+                    <strong>{reporte ? reporte.totales.minutos_tarde : "—"}</strong>
+                </article>
             </section>
 
 
             <section className="reportes-graficos-conjuntos">
-                {/* Dona general */}
                 <section className="reportes-grafico reportes-grafico-dona">
                     <div className="reportes-grafico-header">
                         <h2>Puntualidad general</h2>
@@ -410,6 +436,57 @@ const resumenPracticantes = practicantes
                                         </td>
                                     </tr>
                                 ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+            </section>
+            <section className="reportes-tabla">
+                <h2>Asistencia según horario</h2>
+                <p className="reportes-descripcion">
+                    Solo cuentan los días que cada practicante debía asistir
+                    {reporte
+                        ? ` (del ${reporte.rango.inicio} al ${reporte.rango.fin}).`
+                        : "."}
+                </p>
+
+                {!reporte || reporte.practicantes.length === 0 ? (
+                    <p>No hay datos para estos filtros.</p>
+                ) : (
+                    <div className="reportes-tabla-contenedor">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Practicante</th>
+                                    <th>Programados</th>
+                                    <th>Puntuales</th>
+                                    <th>Tardanzas</th>
+                                    <th>Min. tarde</th>
+                                    <th>Faltas</th>
+                                    <th>Pendientes</th>
+                                    <th>Asistencia</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {reporte.practicantes
+                                    .filter((p) => p.programados > 0)
+                                    .map((p) => (
+                                        <tr key={p.id}>
+                                            <td>{p.nombre} {p.apellido}</td>
+                                            <td>{p.programados}</td>
+                                            <td>{p.puntuales}</td>
+                                            <td>{p.tardanzas}</td>
+                                            <td>{p.minutos_tarde}</td>
+                                            <td>{p.faltas}</td>
+                                            <td>{p.pendientes}</td>
+                                            <td>
+                                                {p.porcentaje_asistencia === null
+                                                    ? "—"
+                                                    : `${p.porcentaje_asistencia}%`}
+                                            </td>
+                                        </tr>
+                                    ))}
                             </tbody>
                         </table>
                     </div>

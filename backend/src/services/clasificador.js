@@ -3,6 +3,8 @@ import { clasificarConGemini } from "./gemini.js";
 const categoriasValidas = [
     "entrada",
     "salida",
+    "horario",
+    "justificacion",
     "otro"
 ];
 

@@ -1,0 +1,66 @@
+.just { width: 100%; color: #263449; }
+.just * { box-sizing: border-box; }
+
+.just-header h1 { margin: 0 0 7px; color: #1e293b; font-size: 22px; font-weight: 700; }
+.just-header p { margin: 0 0 20px; color: #718096; font-size: 14px; }
+
+.just-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+
+.just-tab {
+    padding: 9px 16px;
+    border: 1px solid #e5eaf1;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #475569;
+    font-size: 14px;
+    cursor: pointer;
+}
+.just-tab.activo { background: #3b82f6; border-color: #3b82f6; color: #ffffff; }
+
+.just-error {
+    margin: 0 0 14px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #fee2e2;
+    color: #b91c1c;
+    font-size: 14px;
+}
+
+.just-panel {
+    border: 1px solid #e5eaf1;
+    border-radius: 12px;
+    background: #ffffff;
+    overflow: hidden;
+}
+
+.just-vacio { margin: 0; padding: 28px 20px; color: #718096; text-align: center; }
+
+.just-tabla-contenedor { overflow-x: auto; }
+.just table { width: 100%; border-collapse: collapse; }
+
+.just th {
+    padding: 13px 16px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 12px;
+    text-align: left;
+    text-transform: uppercase;
+}
+
+.just td { padding: 13px 16px; border-top: 1px solid #edf0f5; font-size: 14px; vertical-align: middle; }
+.just tbody tr:hover { background: #f8fafc; }
+.just-original { max-width: 280px; color: #64748b; font-style: italic; }
+
+.just-acciones { display: flex; gap: 8px; }
+
+.just-aprobar, .just-rechazar {
+    padding: 7px 13px;
+    border: none;
+    border-radius: 7px;
+    color: #ffffff;
+    font-size: 13px;
+    cursor: pointer;
+}
+.just-aprobar { background: #16a34a; }
+.just-rechazar { background: #dc2626; }
+.just-aprobar:disabled, .just-rechazar:disabled { opacity: 0.5; cursor: not-allowed; }

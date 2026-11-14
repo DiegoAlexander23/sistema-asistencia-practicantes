@@ -37,6 +37,7 @@ npm install express cors dotenv mysql2 bcrypt
 npm install nodemon -D
 npm install jsonwebtoken
 npm install @google/genai
+npm install node-cron
 
 ## Ejecucion
 npm run dev

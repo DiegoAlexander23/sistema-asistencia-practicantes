@@ -5,9 +5,11 @@ import "./style/inicio.css";
 import { obtenerAsistencias } from "../services/asistenciasService";
 import { obtenerHorarios } from "../services/horariosService";
 import { obtenerPracticantes } from "../services/practicantesService";
+import { obtenerReporte } from "../services/reportesService";
 
 function Inicio() {
     const [asistencias, setAsistencias] = useState([]);
+    const [faltasHoy, setFaltasHoy] = useState(null);
     const [horarios, setHorarios] = useState([]);
     const [practicantes, setPracticantes] = useState([]);
     const [cargando, setCargando] = useState(true);
@@ -19,16 +21,25 @@ function Inicio() {
                 setCargando(true);
                 setError("");
 
-                const [datosAsistencias, datosHorarios, datosPracticantes] =
+                const hoy = new Date();
+                const fechaConsulta = [
+                    hoy.getFullYear(),
+                    String(hoy.getMonth() + 1).padStart(2, "0"),
+                    String(hoy.getDate()).padStart(2, "0")
+                ].join("-");
+
+                const [datosAsistencias, datosHorarios, datosPracticantes, datosReporte] =
                     await Promise.all([
                         obtenerAsistencias(),
                         obtenerHorarios(),
-                        obtenerPracticantes()
+                        obtenerPracticantes(),
+                        obtenerReporte({ inicio: fechaConsulta, fin: fechaConsulta })
                     ]);
 
                 setAsistencias(datosAsistencias);
                 setHorarios(datosHorarios);
                 setPracticantes(datosPracticantes);
+                setFaltasHoy(datosReporte.totales.faltas);
             } catch (err) {
                 setError(err.message || "No se pudieron cargar los datos.");
             } finally {
@@ -206,8 +217,8 @@ function Inicio() {
                     <div className="tarjeta-icono">!</div>
                     <div className="tarjeta-info">
                         <p>Faltas confirmadas</p>
-                        <strong>—</strong>
-                        <span>Requiere confirmar ausencias</span>
+                        <strong>{cargando || faltasHoy === null ? "—" : faltasHoy}</strong>
+                        <span>Turno terminado sin entrada hoy</span>
                     </div>
                 </article>
             </section>
