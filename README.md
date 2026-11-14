@@ -50,7 +50,8 @@ Si el practicante escribe después de que se marcó la falta, la jornada se corr
 | `practicantes` | Datos del practicante, estado y periodo de prácticas |
 | `horarios` | Días y horas de entrada/salida por practicante |
 | `asistencias` | Log de cada mensaje de entrada/salida recibido |
-| `jornadas` | Un registro por día esperado, con estado final |
+| `jornadas` | Un registro por día esperado, con estado final (pendiente, puntual, tarde, falta, justificada) |
+| `justificaciones` | Avisos de ausencia (pendiente, aprobada, rechazada) |
 | `configuracion` | Reglas editables (tolerancia, margen de cierre de faltas) |
 | `usuarios` | Acceso al dashboard |
 
@@ -98,13 +99,17 @@ FRONTEND_URL=http://localhost:5173
 | GET | `/api/practicantes` | Lista de practicantes |
 | GET | `/api/horarios` | Horarios |
 | GET | `/api/asistencias` | Historial de marcaciones |
+| GET | `/api/justificaciones?estado=` | Lista de justificaciones |
+| PATCH | `/api/justificaciones/:id/aprobar` · `/rechazar` | Resolver una justificación |
 | GET | `/api/reportes?inicio=&fin=&practicante=` | Reporte con puntuales, tardanzas y faltas |
 | GET/POST | `/api/whatsapp/webhook` | Webhook de Meta |
 
 ## Limitaciones y mejoras futuras
 
-- Validación de ubicación al marcar (radio alrededor de la oficina).
-- QR dinámico para reforzar la verificación de presencia.
-- Justificaciones de ausencias con aprobación del supervisor.
+- **Feriados:** el cron no los conoce; un feriado con horario cargado genera una falta. Mejora: tabla de feriados.
+- **Ventana de 24 h de WhatsApp:** el sistema solo puede responder (o avisar de una justificación) dentro de las 24 h
+  posteriores al último mensaje del practicante; fuera de ese plazo hacen falta plantillas aprobadas por Meta.
+- **Validación de presencia:** no se verifica ubicación (radio alrededor de la oficina) ni QR dinámico; hoy se confía en el mensaje.
+- Si el servidor está apagado a las 00:05, esa jornada no se crea (mejora: rellenar los días perdidos al arrancar).
 - Aviso al supervisor por WhatsApp cuando ocurre una falta.
 - Exportación de reportes a Excel o PDF.
